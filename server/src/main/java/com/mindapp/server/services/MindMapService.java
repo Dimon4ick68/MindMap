@@ -19,6 +19,9 @@ public class MindMapService {
         return mindMapRepository.findByOwnerUserId(userId);
     }
     
+    public void deleteMap(Long id) {
+        mindMapRepository.deleteById(id);
+    }
     
     public MindMap saveMap(MindMap map) {
         return mindMapRepository.save(map);

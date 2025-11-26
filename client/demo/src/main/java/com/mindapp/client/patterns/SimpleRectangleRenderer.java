@@ -1,15 +1,18 @@
 package com.mindapp.client.patterns;
 
 import com.mindapp.client.models.Node;
+
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.scene.text.TextAlignment;
 
 public class SimpleRectangleRenderer implements NodeRenderer {
     
     private static final double PADDING = 10;
-    private static final double TEXT_HEIGHT = 20;
+    private static final double IMG_SIZE = 100; // Макс розмір картинки
+    private static final double FONT_SIZE = 14;
 
     @Override
     public void render(GraphicsContext gc, Node node) {
@@ -17,61 +20,79 @@ public class SimpleRectangleRenderer implements NodeRenderer {
         double y = node.getY();
         double w = getWidth(node);
         double h = getHeight(node);
+        
+        boolean hasMedia = isMedia(node);
 
-        // 1. Малюємо фон (з урахуванням категорії)
+        // 1. Фон
         if ("URGENT".equals(node.getCategory())) {
-            gc.setFill(Color.RED); // Термінові - червоні
+            gc.setFill(Color.rgb(255, 220, 220)); // Ніжно-червоний
         } else if ("IMPORTANT".equals(node.getCategory())) {
-            gc.setFill(Color.ORANGE); // Важливі - помаранчеві
+            gc.setFill(Color.rgb(255, 245, 200)); // Ніжно-жовтий
         } else {
-            gc.setFill(Color.LIGHTBLUE); // Звичайні - сині
+            gc.setFill(Color.rgb(240, 248, 255)); // AliceBlue
         }
         
-        gc.fillRect(x, y, w, h);
-        gc.setStroke(Color.DARKBLUE);
+        // Малюємо основну плашку
+        gc.fillRoundRect(x, y, w, h, 10, 10); // Заокруглені кути
+        gc.setStroke(Color.DARKSLATEBLUE);
         gc.setLineWidth(1.5);
-        gc.strokeRect(x, y, w, h);
+        gc.strokeRoundRect(x, y, w, h, 10, 10);
 
-        // 2. Малюємо текст
-        gc.setFill(Color.BLACK);
-        gc.setFont(new Font("Arial", 14));
-        gc.fillText(node.getText(), x + PADDING, y + 20);
-
-        // 3. Малюємо вкладення (Картинка або Відео-прев'ю)
-        if ("IMAGE".equals(node.getAttachmentType()) && node.getAttachmentPath() != null) {
-            try {
-                // Завантажуємо картинку (спрощено, краще кешувати)
-                Image img = new Image(node.getAttachmentPath(), w - 20, h - 40, true, true);
-                gc.drawImage(img, x + 10, y + 30);
-            } catch (Exception e) {
-                gc.fillText("[IMG ERROR]", x + 10, y + 50);
+        // 2. Вміст (Картинка)
+        double contentY = y + PADDING;
+        
+        if (hasMedia && node.getAttachmentPath() != null) {
+            // Центруємо картинку по горизонталі
+            double imgX = x + (w - IMG_SIZE) / 2;
+            
+            if ("IMAGE".equals(node.getAttachmentType())) {
+                try {
+                    // Завантажуємо із збереженням пропорцій
+                    Image img = new Image(node.getAttachmentPath(), IMG_SIZE, IMG_SIZE, true, true);
+                    // Коригуємо X, якщо картинка вужча за слот
+                    double drawX = x + (w - img.getWidth()) / 2;
+                    gc.drawImage(img, drawX, contentY);
+                } catch (Exception e) {
+                    gc.setFill(Color.RED);
+                    gc.fillText("?", x + w/2, contentY + 20);
+                }
+            } else {
+                // Заглушка для відео
+                gc.setFill(Color.BLACK);
+                gc.fillRect(imgX, contentY, IMG_SIZE, IMG_SIZE * 0.6); // 16:9
+                gc.setFill(Color.WHITE);
+                gc.fillText("▶", imgX + IMG_SIZE/2 - 5, contentY + (IMG_SIZE * 0.6)/2 + 5);
             }
-        } else if ("VIDEO".equals(node.getAttachmentType())) {
-            // Для відео малюємо заглушку "Play"
-            gc.setFill(Color.BLACK);
-            gc.fillRect(x + 10, y + 30, w - 20, h - 40);
-            gc.setFill(Color.WHITE);
-            gc.fillPolygon(new double[]{x+w/2-10, x+w/2-10, x+w/2+15}, 
-                           new double[]{y+h/2-10, y+h/2+10, y+h/2}, 3);
-            gc.fillText("VIDEO", x + 15, y + h - 5);
+            contentY += (IMG_SIZE * 0.7); // Зсуваємо текст вниз
         }
+
+        // 3. Текст
+        gc.setFill(Color.BLACK);
+        gc.setFont(new Font("Arial", FONT_SIZE));
+        gc.setTextAlign(TextAlignment.CENTER);
+        // Текст чітко по центру ширини
+        gc.fillText(node.getText(), x + w / 2, y + h - PADDING);
+        gc.setTextAlign(TextAlignment.LEFT); // Скидаємо
     }
 
     @Override
     public double getWidth(Node node) {
-        // Якщо є картинка, вузол ширший
-        if ("IMAGE".equals(node.getAttachmentType()) || "VIDEO".equals(node.getAttachmentType())) {
-            return 150;
-        }
-        return (node.getText() != null ? node.getText().length() * 8 : 20) + PADDING * 2;
+        double textWidth = (node.getText() != null ? node.getText().length() * 8 : 20);
+        // Ширина = максимум між текстом і картинкою + відступи
+        double contentWidth = Math.max(textWidth, isMedia(node) ? IMG_SIZE : 0);
+        return contentWidth + PADDING * 3;
     }
 
     @Override
     public double getHeight(Node node) {
-        // Якщо є картинка, вузол вищий
-        if ("IMAGE".equals(node.getAttachmentType()) || "VIDEO".equals(node.getAttachmentType())) {
-            return 130;
+        double h = PADDING * 2 + FONT_SIZE + 5; 
+        if (isMedia(node)) {
+            h += (IMG_SIZE * 0.7) + 5; // Місце під картинку
         }
-        return 30;
+        return h;
+    }
+    
+    private boolean isMedia(Node node) {
+        return "IMAGE".equals(node.getAttachmentType()) || "VIDEO".equals(node.getAttachmentType());
     }
 }

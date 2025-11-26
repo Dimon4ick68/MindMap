@@ -30,6 +30,48 @@ public class ApiClient {
             throw new RuntimeException("Помилка завантаження: " + response.statusCode());
         }
     }
+    public boolean register(String username, String password) {
+        try {
+            String json = String.format("{\"username\":\"%s\", \"password\":\"%s\"}", username, password);
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("http://localhost:8081/api/auth/register"))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(json))
+                    .build();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            return response.statusCode() == 200;
+        } catch (Exception e) { return false; }
+    }
+
+public boolean login(String username, String password) {
+        try {
+            String json = String.format("{\"username\":\"%s\", \"password\":\"%s\"}", username, password);
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("http://localhost:8081/api/auth/login"))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(json))
+                    .build();
+            
+            // --- ОСЬ ЦЬОГО РЯДКА НЕ ВИСТАЧАЛО ---
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            // ------------------------------------
+
+            return response.statusCode() == 200;
+        } catch (Exception e) { return false; }
+    }
+
+    public void deleteMap(Long id) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(BASE_URL + "/" + id))
+                .DELETE()
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() != 200) {
+            throw new RuntimeException("Помилка видалення: " + response.statusCode());
+        }
+    }
 
     // Зберегти мапу (POST)
     public MindMap saveMap(MindMap map) throws Exception {
