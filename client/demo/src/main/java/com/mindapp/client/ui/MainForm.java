@@ -27,14 +27,14 @@ public class MainForm {
     private final String currentUserId;
     
     private TabPane tabPane;
-    private Stage primaryStage; // 1. Винесли змінну сюди (на рівень класу)
+    private Stage primaryStage; 
 
     public MainForm(String userId) {
         this.currentUserId = userId;
     }
 
     public void show(Stage stage) {
-        this.primaryStage = stage; // 2. Запам'ятовуємо stage при старті
+        this.primaryStage = stage; 
         
         stage.setTitle("MindApp - Користувач: " + currentUserId);
 

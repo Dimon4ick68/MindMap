@@ -5,16 +5,19 @@ import javafx.scene.paint.Color;
 public class DarkThemeFactory implements ThemeFactory {
     @Override
     public NodeRenderer createNodeRenderer() {
-        return new OvalRenderer(); // Інший вигляд вузлів
+        // Рамка світла, текст білий, фон вузла темно-сірий
+        return new SimpleRectangleRenderer(Color.LIGHTGRAY, Color.WHITE, Color.rgb(60, 63, 65));
     }
 
     @Override
     public LineStrategy createLineStrategy() {
-        return new StraightLineStrategy(); // Можна лишити прямі або додати криві
+        // Лінії білі (щоб було видно на темному)
+        return new StraightLineStrategy(Color.WHITE);
     }
 
     @Override
     public Color getBackgroundColor() {
-        return Color.rgb(30, 30, 30); // Темний фон
+        // Фон полотна темний
+        return Color.rgb(43, 43, 43);
     }
 }

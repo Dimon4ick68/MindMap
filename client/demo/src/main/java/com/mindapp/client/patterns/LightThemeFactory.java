@@ -5,12 +5,14 @@ import javafx.scene.paint.Color;
 public class LightThemeFactory implements ThemeFactory {
     @Override
     public NodeRenderer createNodeRenderer() {
-        return new SimpleRectangleRenderer(); // Вже нами написаний
+        // Рамка темна, текст чорний, фон світлий (AliceBlue)
+        return new SimpleRectangleRenderer(Color.DARKSLATEBLUE, Color.BLACK, Color.rgb(240, 248, 255));
     }
 
     @Override
     public LineStrategy createLineStrategy() {
-        return new StraightLineStrategy(); // Вже нами написана
+        // Лінії чорні
+        return new StraightLineStrategy(Color.BLACK);
     }
 
     @Override
